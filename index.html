@@ -84,7 +84,7 @@
     <div class="sub">
       タップでジャンプ！クイヤを走らせよう。<br>
       <b class="ok">1〜8のコイン</b>を集めてスコアアップ。<br>
-      <b class="ng">9</b>に触れる・ブロックに横から激突・穴に落ちるとゲームオーバー。
+      <b class="ng">9のコイン</b>に触れる・ブロックに横から激突・穴に落ちるとゲームオーバー。
     </div>
     <button class="btn" id="startBtn">タップでスタート</button>
   </div>
@@ -422,6 +422,26 @@
   let score = 0, highScore = 0;
   let camX = 0, speed = 0, distance = 0;
 
+  // ---------- チートフック(外部の拡張機能/スクリプトから操作するためのAPI) ----------
+  const CHEATS = { invincible: false, noFallDeath: false, autoJump: false };
+  window.__KUIYA__ = {
+    cheats: CHEATS,
+    getScore: () => score,
+    getHighScore: () => highScore,
+    getState: () => state,
+    start: () => { if (state !== 'playing') startGame(); }
+  };
+
+  function reviveFromFall(fromCol) {
+    let i = fromCol, tries = 0;
+    while (columns[i] && columns[i].hole && tries < 300) { i++; tries++; }
+    const cd = columns[i];
+    const level = cd ? cd.level : curLevel;
+    player.y = groundYForLevel(level) - player.h;
+    player.vy = 0;
+    player.onGround = true;
+  }
+
   function resetGame() {
     resetTerrain();
     resetPlayer();
@@ -492,8 +512,24 @@
     if (colData && colData.hole) {
       const pitGroundY = groundYForLevel(colData.level);
       if (player.y + player.h > pitGroundY + BS * 0.55) {
-        endGame('穴に落ちてしまった');
-        return;
+        if (CHEATS.noFallDeath) {
+          reviveFromFall(footCol);
+        } else {
+          endGame('穴に落ちてしまった');
+          return;
+        }
+      }
+    }
+
+    // 自動ジャンプ(チート): 前方に穴・壁があれば自動でジャンプ入力する
+    if (CHEATS.autoJump && player.onGround) {
+      const lookAheadPx = Math.max(BS * 3, speed * AIR_TIME * 0.85);
+      const scanCols = Math.ceil(lookAheadPx / BS) + 1;
+      const startScan = colAt(playerWorldX + player.w);
+      for (let k = 0; k <= scanCols; k++) {
+        const cd = columns[startScan + k];
+        if (!cd) break;
+        if (cd.hole || cd.wallFace) { requestJump(); break; }
       }
     }
 
@@ -517,8 +553,12 @@
     }
 
     if (player.y > H + BS * 2) {
-      endGame('穴に落ちてしまった');
-      return;
+      if (CHEATS.noFallDeath) {
+        reviveFromFall(footCol);
+      } else {
+        endGame('穴に落ちてしまった');
+        return;
+      }
     }
 
     for (const c of coins) {
@@ -531,8 +571,9 @@
       if (Math.hypot(dx, dy) < rr) {
         c.taken = true;
         if (c.value === 9) {
+          if (CHEATS.invincible) continue;
           spawnScoreParticle(c.x - camX, c.y, '9!!', false);
-          endGame('9に触れてしまった');
+          endGame('9のコインに触れてしまった');
           return;
         }
         score += c.value;
