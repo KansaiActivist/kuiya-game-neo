@@ -228,7 +228,8 @@
   function maybeSpawnCoin() {
     nextCoinIn--;
     if (nextCoinIn > 0) return;
-    nextCoinIn = 3 + Math.floor(Math.random() * 4);
+    const freq = Math.max(0.2, CHEATS.coinFrequency || 1);
+    nextCoinIn = Math.max(1, Math.round((3 + Math.floor(Math.random() * 4)) / freq));
 
     sinceNine++;
     const p9 = sinceNine >= 3 ? clamp(0.08 + (sinceNine - 3) * 0.05, 0, 0.32) : 0;
@@ -423,7 +424,7 @@
   let camX = 0, speed = 0, distance = 0;
 
   // ---------- チートフック(外部の拡張機能/スクリプトから操作するためのAPI) ----------
-  const CHEATS = { invincible: false, noFallDeath: false, autoJump: false };
+  const CHEATS = { invincible: false, noFallDeath: false, autoJump: false, speedMultiplier: 1, coinFrequency: 1 };
   window.__KUIYA__ = {
     cheats: CHEATS,
     getScore: () => score,
@@ -478,7 +479,7 @@
 
   function update(dt) {
     distance += speed * dt;
-    speed = clamp(BASE_SPEED + distance * 0.012, BASE_SPEED, MAX_SPEED);
+    speed = clamp(BASE_SPEED + distance * 0.012, BASE_SPEED, MAX_SPEED) * CHEATS.speedMultiplier;
     camX += speed * dt;
     ensureGenerated(camX + W + BS * 20);
 
@@ -546,7 +547,7 @@
     if (frontData && !frontData.hole && frontData.wallFace) {
       const wallTop = groundYForLevel(frontData.level);
       const tolerance = BS * 0.18;
-      if (player.y + player.h > wallTop + tolerance) {
+      if (player.y + player.h > wallTop + tolerance && !CHEATS.invincible) {
         endGame('ブロックに横から激突した');
         return;
       }
