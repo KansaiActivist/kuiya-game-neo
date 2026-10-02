@@ -210,7 +210,6 @@
   }
 
   function spawnHoleArcCoins(holeStartWorldX, widthCols) {
-    // ジャンプの放物線に沿ってコインを並べ、跳ぶタイミングと軌道を誘導する
     const jumpHeightBlocks = (JUMP_V * JUMP_V) / (2 * GRAVITY) / BS;
     const peak = BS * jumpHeightBlocks * 0.7;
     const groundY = groundYForLevel(curLevel);
@@ -297,19 +296,16 @@
     const bob = onGround ? Math.sin(animT * 14) * h * 0.04 : 0;
     ctx.translate(0, bob);
 
-    // 平たい尻尾(ビーバー)
     ctx.fillStyle = '#5c4028';
     ctx.beginPath();
     ctx.ellipse(-w * 0.5, -h * 0.32, w * 0.2, h * 0.14, -0.35, 0, Math.PI * 2);
     ctx.fill();
 
-    // 足
     ctx.fillStyle = '#6b4a2c';
     const legSwing = onGround ? Math.sin(animT * 16) * h * 0.12 : 0;
     ctx.fillRect(-w * 0.24, -h * 0.1 + legSwing, w * 0.16, h * 0.14);
     ctx.fillRect(w * 0.06, -h * 0.1 - legSwing, w * 0.16, h * 0.14);
 
-    // 体(茶色、下部に明るい腹)
     const bodyGrad = ctx.createRadialGradient(-w * 0.1, -h * 0.62, w * 0.1, -w * 0.02, -h * 0.4, w * 0.62);
     bodyGrad.addColorStop(0, '#a97a4e');
     bodyGrad.addColorStop(1, '#8a5a34');
@@ -322,25 +318,21 @@
     ctx.fillStyle = '#c9a877';
     ctx.fill();
 
-    // 頭
     ctx.beginPath();
     ctx.ellipse(w * 0.34, -h * 0.56, w * 0.24, h * 0.24, 0, 0, Math.PI * 2);
     ctx.fillStyle = '#9a6c42';
     ctx.fill();
 
-    // 耳
     ctx.fillStyle = '#7a5330';
     ctx.beginPath();
     ctx.ellipse(w * 0.24, -h * 0.8, w * 0.08, h * 0.09, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // ほっぺ
     ctx.beginPath();
     ctx.ellipse(w * 0.44, -h * 0.42, w * 0.13, h * 0.13, 0, 0, Math.PI * 2);
     ctx.fillStyle = '#b28657';
     ctx.fill();
 
-    // 目
     ctx.fillStyle = '#2a1a0c';
     ctx.beginPath();
     ctx.arc(w * 0.42, -h * 0.6, w * 0.045, 0, Math.PI * 2);
@@ -350,7 +342,7 @@
     ctx.arc(w * 0.435, -h * 0.615, w * 0.015, 0, Math.PI * 2);
     ctx.fill();
 
-    // 前歯(出っ歯)
+
     ctx.fillStyle = '#fdf6da';
     ctx.fillRect(w * 0.5, -h * 0.42, w * 0.05, h * 0.09);
     ctx.fillRect(w * 0.55, -h * 0.42, w * 0.05, h * 0.09);
@@ -358,7 +350,6 @@
     ctx.lineWidth = 1;
     ctx.strokeRect(w * 0.5, -h * 0.42, w * 0.1, h * 0.09);
 
-    // ひげ
     ctx.strokeStyle = 'rgba(60,40,20,0.5)';
     ctx.lineWidth = 1;
     ctx.beginPath();
@@ -423,7 +414,6 @@
   let score = 0, highScore = 0;
   let camX = 0, speed = 0, distance = 0;
 
-  // ---------- チートフック(外部の拡張機能/スクリプトから操作するためのAPI) ----------
   const CHEATS = { invincible: false, noFallDeath: false, autoJump: false, speedMultiplier: 1, coinFrequency: 1 };
   window.__KUIYA__ = {
     cheats: CHEATS,
@@ -509,7 +499,6 @@
     }
     player.onGround = grounded;
 
-    // 穴に沈み込んだら即ゲームオーバー(高速移動で奥の地面に着地判定される前に検出)
     if (colData && colData.hole) {
       const pitGroundY = groundYForLevel(colData.level);
       if (player.y + player.h > pitGroundY + BS * 0.55) {
@@ -522,7 +511,6 @@
       }
     }
 
-    // 自動ジャンプ(チート): 前方に穴・壁があれば自動でジャンプ入力する
     if (CHEATS.autoJump && player.onGround) {
       const lookAheadPx = Math.max(BS * 3, speed * AIR_TIME * 0.85);
       const scanCols = Math.ceil(lookAheadPx / BS) + 1;
@@ -598,7 +586,6 @@
     for (const cl of clouds) drawCloud(cl.x, cl.y, cl.s);
   }
 
-  // 列・段ごとに決定的な疑似乱数(見た目のガタつき防止)で小石を配置
   function pebbleSeed(col, row) {
     const n = Math.sin(col * 12.9898 + row * 78.233) * 43758.5453;
     return n - Math.floor(n);
@@ -617,7 +604,6 @@
   function drawBlockColumn(screenX, level, colIndex) {
     const topY = groundYForLevel(level);
     const capH = BS * 0.34;
-    // 土台(ブロック1個ずつグリッド+小石)
     let y = topY + capH;
     let row = 0;
     while (y < H) {
@@ -627,7 +613,6 @@
       ctx.strokeStyle = 'rgba(60,35,15,0.35)';
       ctx.lineWidth = 1;
       ctx.strokeRect(screenX + 0.5, y + 0.5, BS - 1, h - 1);
-      // 小石テクスチャ(決定的な疑似乱数)
       const p1 = pebbleSeed(colIndex, row);
       const p2 = pebbleSeed(colIndex + 0.5, row);
       ctx.fillStyle = 'rgba(115,75,40,0.7)';
@@ -640,7 +625,6 @@
       y += BS;
       row++;
     }
-    // 草ブロック(角丸+ギザギザの下端)
     const gx = screenX + 1.5, gw = BS - 3;
     roundRectPath(gx, topY, gw, capH + 6, Math.min(7, BS * 0.16));
     ctx.fillStyle = '#63c850';
